@@ -1,0 +1,120 @@
+# =================================
+# MORPHOLOGY USING PYTHON (NLP)
+# =================================
+
+import nltk
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+
+# Download required resources (run once)
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+# Initialize tools
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+
+# =================================
+# 1. ADD-DELETE MORPHOLOGY FUNCTION
+# =================================
+def morphology_rules(word):
+    results = []
+
+    # Rule 1: Add prefix "un"
+    results.append(("Add Prefix 'un'", word, "un" + word))
+
+    # Rule 2: Add suffix "ing"
+    if word.endswith('e'):
+        new_word = word[:-1] + "ing"   # delete 'e'
+        results.append(("Drop 'e' + ing", word, new_word))
+    else:
+        results.append(("Add 'ing'", word, word + "ing"))
+
+    # Rule 3: y → i + ness
+    if word.endswith('y'):
+        new_word = word[:-1] + "iness"
+        results.append(("y → i + ness", word, new_word))
+    else:
+        results.append(("Add 'ness'", word, word + "ness"))
+
+    # Rule 4: Add suffix "er"
+    results.append(("Add 'er'", word, word + "er"))
+
+    return results
+
+# =================================
+# 2. STEMMING & LEMMATIZATION
+# =================================
+def nlp_processing(word):
+    stem = stemmer.stem(word)
+    lemma = lemmatizer.lemmatize(word)
+
+    return stem, lemma
+
+# =================================
+# 3. MAIN PROGRAM
+# =================================
+word = input("Enter a word: ")
+
+print("\n--- Morphology (Add-Delete Table) ---")
+results = morphology_rules(word)
+
+for rule, base, new in results:
+    print(f"{rule:20} | {base:10} -> {new}")
+
+print("\n--- NLP Processing ---")
+stem, lemma = nlp_processing(word)
+
+print(f"Stemmed Word     : {stem}")
+print(f"Lemmatized Word  : {lemma}")
+
+
+
+
+
+'''
+Part 1: Core Terminology (The Essentials)
+To ace your viva and understand the program, you need to know these definitions inside out:
+•	Morphology: The subfield of linguistics that studies the internal structure of words and how they are formed from smaller units.
+•	Morpheme: The smallest grammatical or meaningful unit in a language.
+o	Example: The word "unbreakable" has three morphemes: un- (bound/prefix), break (free/root), and -able (bound/suffix).
+•	Stem / Root / Lemma:
+o	Root: The core, irreducible semantic unit of a word (e.g., agree in disagreement).
+o	Stem: The part of the word to which grammatical affixes are attached.
+o	Lemma: The dictionary/canonical form of a word (e.g., the lemma for producing, produces, and produced is produce).
+•	Affixes: Bound morphemes attached to a stem.
+o	Prefix: Added to the front (e.g., rewrite).
+o	Suffix: Added to the end (e.g., walked).
+o	Infix: Inserted inside the root (rare in English, common in languages like Tagalog).
+•	Inflectional vs. Derivational Morphology:
+o	Inflectional: Modifies a word's form (tense, number, gender) without changing its grammatical category or core meaning (e.g., cat $\rightarrow$ cats, walk $\rightarrow$ walking).
+o	Derivational: Creates a new word, often changing the grammatical category or meaning (e.g., verb sing $\rightarrow$ noun singer, adjective happy $\rightarrow$ noun happiness).
+________________________________________
+Part 2: Understanding the "Add-Delete" Table
+When we build a computational morphological analyzer or stemmer, we need rules to handle spelling changes when suffixes are added or removed.
+For example, when turning study into studies, we don't just add es. We have to delete the y and add ies.
+An Add-Delete Table is a structured lookup table that a program uses to perform these spelling adjustments (orthographic rules) during morphological parsing.
+How the Table is Structured
+Typically, an add-delete table contains columns like:
+1.	Input Suffix/Ending: What the input word ends with.
+2.	Delete: How many characters (or which specific characters) to strip from the end.
+3.	Add: What characters to append to find the root/stem.
+4.	Grammatical Feature/Tag: The morphological feature being stripped/added (e.g., Plural, Past Tense).
+Example of an Add-Delete Table (English Verbs & Nouns)
+Input Ending	Delete (Strip)	Add	Resulting Stem	Example Input → Output	Feature/Tag
+ies	ies	y	study	studies $\rightarrow$ study	Noun (Plural) / Verb (3rd Person)
+ied	ied	y	try	tried $\rightarrow$ try	Verb (Past)
+ying	ing	None	study	studying $\rightarrow$ study	Verb (Progressive)
+es	es	None	box	boxes $\rightarrow$ box	Noun (Plural)
+ing (with double consonant)	ing + last char	None	run	running $\rightarrow$ run	Verb (Progressive)
+ed (dropped 'e')	d	None	bake	baked $\rightarrow$ bake	Verb (Past)
+________________________________________
+Part 3: How the Program Works (The Logic)
+If you are asked to explain your code, walk through this logical pipeline:
+1.	Input: The user inputs a word (e.g., worried).
+2.	Suffix Matching: The program checks the end of the word against the "Input Ending" column in your Add-Delete table.
+3.	Rule Application: * It matches the suffix ied.
+o	According to the table, it deletes ied from the end of worried (leaving worr).
+o	It adds y to the end of the remaining string (resulting in worry).
+4.	Dictionary Validation (Optional but ideal): The program checks if worry exists in a valid lexicon/dictionary.
+5.	Output: Returns the root word worry and its morphological features (e.g., Verb + Past Tense).
+'''
