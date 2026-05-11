@@ -1,0 +1,131 @@
+!pip install nltk scikit-learn pandas
+
+import nltk
+import pandas as pd
+import string
+
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Download required data
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+# =================================
+# 1. SAMPLE DATA
+# =================================
+data = {
+    "text": [
+        "This is a sample sentence!",
+        "Text cleaning is very important.",
+        "NLP techniques are useful in real-world applications."
+    ],
+    "label": ["A", "B", "A"]
+}
+
+df = pd.DataFrame(data)
+print("Original Data:\n", df)
+
+# =================================
+# 2. TEXT CLEANING
+# =================================
+def clean_text(text):
+    text = text.lower()  # lowercase
+    text = text.translate(str.maketrans('', '', string.punctuation))  # remove punctuation
+    tokens = word_tokenize(text)  # tokenize
+    return tokens
+
+df['tokens'] = df['text'].apply(clean_text)
+
+# =================================
+# 3. REMOVE STOP WORDS
+# =================================
+stop_words = set(stopwords.words('english'))
+
+df['no_stopwords'] = df['tokens'].apply(
+    lambda words: [w for w in words if w not in stop_words]
+)
+
+# =================================
+# 4. LEMMATIZATION
+# =================================
+lemmatizer = WordNetLemmatizer()
+
+df['lemmatized'] = df['no_stopwords'].apply(
+    lambda words: [lemmatizer.lemmatize(w) for w in words]
+)
+
+# Convert back to sentence
+df['clean_text'] = df['lemmatized'].apply(lambda words: " ".join(words))
+
+# =================================
+# 5. LABEL ENCODING
+# =================================
+encoder = LabelEncoder()
+df['encoded_label'] = encoder.fit_transform(df['label'])
+
+# =================================
+# 6. TF-IDF REPRESENTATION
+# =================================
+tfidf = TfidfVectorizer()
+tfidf_matrix = tfidf.fit_transform(df['clean_text'])
+
+tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf.get_feature_names_out())
+
+# =================================
+# 7. SAVE OUTPUTS
+# =================================
+
+# Save cleaned data
+df.to_csv("cleaned_data.csv", index=False)
+
+# Save TF-IDF matrix
+tfidf_df.to_csv("tfidf_output.csv", index=False)
+
+# =================================
+# 8. DISPLAY OUTPUTS
+# =================================
+print("\nCleaned Data:\n", df[['text', 'clean_text', 'encoded_label']])
+print("\nTF-IDF Matrix:\n", tfidf_df)
+
+
+
+
+'''
+Part 1: The Assignment Explained (Step-by-Step)
+This program is a classic Data Preprocessing Pipeline. Raw text data is messy. Machine learning models cannot read English; they only understand numbers. Your assignment is about taking messy human language, cleaning it, and mathematically translating it into numbers so a model can learn from it.
+1. Text Cleaning
+•	What it is: The process of removing "noise" from your text data.
+•	What you actually do: You typically convert all text to lowercase, remove punctuation (like !, ?, ,), remove special characters, remove URLs, and strip out extra white spaces.
+•	Why you do it: To standardize the text. A computer sees "Apple", "apple!", and "apple" as three completely different words. Cleaning ensures they are all treated as the same word: "apple".
+2. Removing Stop Words
+•	What it is: Filtering out highly common words like "is," "the," "and," "a," "in."
+•	What you actually do: You use a pre-built list of stop words (usually from libraries like NLTK or spaCy) and remove those words from your text.
+•	Why you do it: These words appear constantly but rarely add any meaningful context or semantic value to the text. Removing them shrinks your dataset size and helps the model focus on the "important" words.
+3. Lemmatization
+•	What it is: Reducing a word to its base, dictionary form (known as the lemma).
+•	What you actually do: You pass your words through a lemmatizer (like WordNetLemmatizer). It recognizes that "running," "ran," and "runs" all share the base word "run." Similarly, "better" becomes "good."
+•	Why you do it: It further reduces the vocabulary size. Instead of learning three different weights for "run," "running," and "ran," the model only has to learn one.
+4. Label Encoding
+•	What it is: Converting categorical target variables (the outputs/labels you want to predict) into numerical format.
+•	What you actually do: If your dataset has labels like "Positive" and "Negative", you use a tool like LabelEncoder from scikit-learn to turn them into 1 and 0.
+•	Why you do it: As mentioned, machine learning algorithms perform mathematical equations. They cannot calculate an equation using the word "Positive", so we map it to an integer.
+5. TF-IDF Representation
+•	What it is: Term Frequency - Inverse Document Frequency. It is a statistical measure used to evaluate how important a word is to a document within a larger collection of documents (a corpus).
+•	How it works: * TF (Term Frequency): Measures how often a word appears in a specific document.
+o	IDF (Inverse Document Frequency): Measures how rare the word is across all the documents.
+o	The Math:
+$$TFIDF = TF \times \log\left(\frac{N}{DF}\right)$$
+(where $N$ is total documents and $DF$ is documents containing the term).
+•	Why you do it: It turns your text into a matrix of numbers. It gives a high score to words that appear frequently in one specific document but rarely in other documents (meaning that word is highly representative of that specific document).
+6. Saving Outputs
+•	What it is: Exporting your processed data and models to your local storage.
+•	What you actually do: You typically use Python's pickle or joblib libraries to save the cleaned dataset, the fitted TF-IDF Vectorizer, and the Label Encoder object as .pkl files.
+'''
