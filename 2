@@ -1,0 +1,115 @@
+# =================================
+# INSTALL (Run once if needed)
+# =================================
+# !pip install nltk scikit-learn gensim
+
+import nltk
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from gensim.models import Word2Vec
+from nltk.tokenize import word_tokenize
+import numpy as np
+
+# Download tokenizer
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
+# =================================
+# DATASET
+# =================================
+corpus = [
+    "This is a sample sentence",
+    "This sentence is for testing",
+    "Word embeddings are useful in NLP"
+]
+
+# =================================
+# 1. BAG OF WORDS (COUNT)
+# =================================
+print("\n--- BAG OF WORDS (COUNT) ---")
+
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(corpus)
+
+vocab = vectorizer.get_feature_names_out()
+bow_matrix = X.toarray()
+
+print("Vocabulary:", vocab)
+print("BoW Matrix:\n", bow_matrix)
+
+# =================================
+# 2. NORMALIZED COUNT (TERM FREQUENCY)
+# =================================
+print("\n--- NORMALIZED COUNT ---")
+
+normalized_bow = bow_matrix / bow_matrix.sum(axis=1, keepdims=True)
+
+print("Normalized BoW:\n", normalized_bow)
+
+# =================================
+# 3. TF-IDF
+# =================================
+print("\n--- TF-IDF ---")
+
+tfidf = TfidfVectorizer()
+tfidf_matrix = tfidf.fit_transform(corpus)
+
+print("Vocabulary:", tfidf.get_feature_names_out())
+print("TF-IDF Matrix:\n", tfidf_matrix.toarray())
+
+# =================================
+# 4. WORD2VEC EMBEDDINGS
+# =================================
+print("\n--- WORD2VEC ---")
+
+# Tokenize sentences
+tokenized_corpus = [word_tokenize(sentence.lower()) for sentence in corpus]
+
+# Train Word2Vec model
+model = Word2Vec(
+    sentences=tokenized_corpus,
+    vector_size=50,
+    window=3,
+    min_count=1,
+    workers=4
+)
+
+# Example word vector
+print("\nVector for 'sentence':")
+print(model.wv['sentence'])
+
+
+
+'''
+Part 1: Detailed Theoretical Breakdown of Concepts
+1. Bag of Words (BoW)
+The Bag of Words model represents text by treating a document as an unordered collection ("bag") of its words. It disregards word order, grammar, and syntax, focusing entirely on word multiplicity. 
+•	Step 1: Build a Vocabulary ($V$): Extract all unique words across the entire collection of documents (the corpus). 
+•	Step 2: Vectorization: Create a vector of size $|V|$ for each document. Each position in the vector corresponds to a word in the vocabulary. 
+A. Count Occurrence (Raw Frequency)
+In raw count vectorization, the value at each index is the absolute number of times the vocabulary word appears in that specific document. 
+$$\text{Vector}[i] = \text{Count of word } w_i \text{ in document } d$$
+B. Normalized Count Occurrence
+Raw frequencies can be highly biased toward longer documents (which naturally have higher counts). To mitigate this, we normalize the raw counts. 
+•	$L_1$ Normalization (Term Frequency - Relative): Divides each count by the sum of absolute values in the vector (the total number of words in the document).
+$$\text{Normalized Count } (w) = \frac{\text{Count}(w, d)}{\sum_{t \in d} \text{Count}(t, d)}$$
+•	$L_2$ Normalization (Cosine Normalization): Normalizes the vector such that its Euclidean length ($L_2$ norm) equals 1. This is the default behavior in tools like Scikit-Learn's TfidfVectorizer when using use_idf=False.
+$$\text{Normalized Vector } v_{\text{norm}} = \frac{v}{\|v\|_2} = \frac{v}{\sqrt{\sum v_i^2}}$$
+________________________________________
+2. TF-IDF (Term Frequency - Inverse Document Frequency)
+While BoW tells us what words are in a document, it doesn't tell us which words are actually important. Highly frequent but generic words (like "the", "is", "of") dominate the representation. TF-IDF corrects this by penalizing words that appear across many documents. 
+$$\text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \text{IDF}(t, D)$$
+A. Term Frequency (TF)
+Measures how frequently a term $t$ occurs in a document $d$.
+$$\text{TF}(t, d) = \frac{\text{Count}(t, d)}{\text{Total words in } d}$$
+B. Inverse Document Frequency (IDF)
+Measures how rare or informative a term is across the entire corpus ($D$). If a word appears in every document, its IDF approaches 0. 
+$$\text{IDF}(t, D) = \log \left( \frac{N}{1 + \text{DF}(t)} \right)$$
+(Where $N$ is the total number of documents in the corpus, and $\text{DF}(t)$ is the number of documents containing the term $t$. The "$1+$" is added to the denominator to prevent division-by-zero errors if a word is missing). 
+________________________________________
+3. Word2Vec (Dense Semantic Embeddings)
+Traditional methods (BoW, TF-IDF) create sparse, high-dimensional vectors (size of vocabulary $|V|$) and completely miss semantic relationships (e.g., in BoW, "king" and "queen" are as distinct as "king" and "apple"). 
+Word2Vec is a predictive deep learning framework that learns dense, low-dimensional vectors (typically 100 to 300 dimensions) where words with similar contexts are mapped to nearby points in the vector space.
+Architectures
+1.	CBOW (Continuous Bag of Words): Predicts the target word based on its surrounding context words. (Fast to train, works well with frequent words). 
+2.	Skip-gram: Predicts the surrounding context words given a single target word. (Slower to train, but excels at representing rare words).
+'''
