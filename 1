@@ -1,0 +1,101 @@
+import nltk
+
+# 1. Import all required modules
+from nltk.tokenize import WhitespaceTokenizer, WordPunctTokenizer, TreebankWordTokenizer, TweetTokenizer, MWETokenizer
+from nltk.stem import PorterStemmer, SnowballStemmer, WordNetLemmatizer
+
+# Run these downloads once if you haven't already on your lab machine
+# nltk.download('punkt')
+# nltk.download('wordnet')
+
+# A sample text designed to test all tokenizers (has emojis, tags, contractions, and multi-word phrases)
+text = "Wow! @student, I can't believe we are studying Natural Language Processing in New York :-) #NLP"
+
+print("--- 1. TOKENIZATION ---")
+
+# Whitespace: Splits purely on spaces
+print("Whitespace:", WhitespaceTokenizer().tokenize(text))
+
+# Punctuation: Splits on spaces AND separates every punctuation mark
+print("\nPunctuation:", WordPunctTokenizer().tokenize(text))
+
+# Treebank: Smart splitting (handles "can't" gracefully)
+print("\nTreebank:", TreebankWordTokenizer().tokenize(text))
+
+# Tweet: Keeps handles (@), emojis (:-)), and hashtags (#) intact
+print("\nTweet:", TweetTokenizer().tokenize(text))
+
+# MWE: Groups specific words together. (Note: It needs a list of pre-tokenized words, not a raw string)
+mwe = MWETokenizer([('New', 'York'), ('Natural', 'Language', 'Processing')])
+simple_tokens = text.split() # basic split to feed into MWE
+print("\nMWE:", mwe.tokenize(simple_tokens))
+
+
+print("\n--- 2. STEMMING ---")
+word_to_stem = "studying"
+
+# Porter: Older, strict, English only
+porter = PorterStemmer()
+print("Porter Stemmer:", porter.stem(word_to_stem))
+
+# Snowball: Newer, faster, multi-language (specify 'english')
+snowball = SnowballStemmer('english')
+print("Snowball Stemmer:", snowball.stem(word_to_stem))
+
+
+print("\n--- 3. LEMMATIZATION ---")
+word_to_lemmatize = "dying"
+
+# WordNet: Uses dictionary to find the root word. 
+lemmatizer = WordNetLemmatizer()
+
+# Default (assumes noun): Will likely just return "studying"
+print("Lemma (Default):", lemmatizer.lemmatize(word_to_lemmatize))
+
+# Explicit (telling it it's a verb 'v'): Will correctly return "study"
+print("Lemma (As Verb):", lemmatizer.lemmatize(word_to_lemmatize, pos='v'))
+
+
+
+
+
+
+
+'''1. Glossary of Necessary Terms
+Before writing the code, you need to understand exactly what these processes are doing to your text.
+
+Corpus: A large collection of structured texts used for linguistic analysis. In your case, it's the input string or document you are processing.
+
+Tokenization: The process of breaking down a continuous stream of text into smaller, meaningful chunks called tokens (usually words, sentences, or subwords). It is the very first step in almost any NLP pipeline.
+
+Stemming: A crude, heuristic process that chops off the ends of words to reduce them to their root form (called a "stem"). It does not care if the resulting stem is an actual dictionary word. (e.g., "Caring" -> "Car").
+
+Lemmatization: A more sophisticated process that uses vocabulary and morphological analysis to reduce a word to its base, dictionary form (called a "lemma"). It ensures the root word belongs to the language. (e.g., "Caring" -> "Care").
+
+POS Tagging (Part of Speech Tagging): Labeling a word in a text as corresponding to a particular part of speech (noun, verb, adjective, etc.). Note: Lemmatization often requires POS tags to work perfectly.
+
+2. Assignment Breakdown: Tokenization Techniques
+Your assignment asks you to use five specific tokenizers from the nltk.tokenize module. Here is what each one does:
+
+Whitespace Tokenizer (WhitespaceTokenizer): The simplest form. It strictly splits the text whenever it sees a space, tab, or newline character. It leaves punctuation attached to the words.
+
+Punctuation-based Tokenizer (WordPunctTokenizer): Splits text on whitespace and all punctuation marks. Every single punctuation mark becomes its own token.
+
+Treebank Word Tokenizer (TreebankWordTokenizer): The standard workhorse of NLTK. It uses regular expressions to tokenize text based on the Penn Treebank rules. It smartly splits standard contractions (e.g., "don't" becomes "do" and "n't") and treats punctuation at the end of sentences logically.
+
+Tweet Tokenizer (TweetTokenizer): Designed specifically for the messy text of social media. It preserves emojis (:-), ❤️), hashtags (#NLP), and user handles (@user), which standard tokenizers would normally tear apart.
+
+MWE Tokenizer (MWETokenizer): Multi-Word Expression tokenizer. It takes a string that has already been tokenized into single words and groups specific multi-word phrases into a single token (e.g., turning ["United", "States"] into ["United_States"]).
+
+3. Assignment Breakdown: Stemming vs. Lemmatization
+Once the text is broken into tokens, you need to normalize them.
+
+Stemming:
+
+Porter Stemmer (PorterStemmer): The oldest and most famous stemming algorithm developed by Martin Porter. It is gentle and computationally fast but can sometimes be a bit too conservative or result in strange stems.
+
+Snowball Stemmer (SnowballStemmer): Also known as Porter2. It is slightly more aggressive, faster, and—most importantly—supports multiple languages (unlike Porter, which is English-only).
+
+Lemmatization:
+
+WordNet Lemmatizer (WordNetLemmatizer): NLTK's primary lemmatizer. It looks up words in the WordNet lexical database to find their lemmas. Pro-tip for the exam: If you pass "running" to it without telling it "running" is a verb, it might just return "running". If you pass it with a verb POS tag, it will return "run".'''
